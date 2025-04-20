@@ -1,6 +1,5 @@
 import flwr as fl
 from typing import List, Tuple, Dict
-from flwr.server.client_manager import SimpleClientManager
 from flwr.server.strategy import FedAdam
 from flwr.common import (
     EvaluateRes,
@@ -16,20 +15,14 @@ import numpy as np
 import pickle
 from sklearn.linear_model import LogisticRegression
 from typing import Dict
-import matplotlib.pyplot as plt  # Import matplotlib for plotting
-import os
+import matplotlib.pyplot as plt 
 import utils
 
-# Load the vectorizer
-with open("./data_sets/tfidf_vectorizer.pkl", 'rb') as f:
-    vectorizer = pickle.load(f)
 
-# Load the test data for server-side evaluation
 test_df = pd.read_csv("./data_sets/server/test_data.csv")
 X_test = test_df.drop("Label", axis=1).values
 y_test = test_df["Label"].values
 
-# Lists to store server-side evaluation metrics
 server_round_history = []
 server_accuracy_history = []
 server_recall_history = []
@@ -37,7 +30,6 @@ server_precision_history = []
 server_f1_score_history = []
 server_log_loss = []
 
-# Lists to store aggregated client-side evaluation metrics
 aggregated_round_history = []
 aggregated_accuracy_history = []
 aggregated_recall_history = []
@@ -47,7 +39,6 @@ aggregated_log_loss = []
 
 
 def weighted_average(metrics: List[Tuple[int, Dict[str, Scalar]]]) -> Dict[str, Scalar]:
-    """Compute weighted average of metrics."""
     accuracies = [num_examples * m["accuracy"] for num_examples, m in metrics]
     recalls = [num_examples * m["recall"] for num_examples, m in metrics]
     precisions = [num_examples * m["precision"] for num_examples, m in metrics]
@@ -68,8 +59,8 @@ def evaluate(
     config: Dict[str, Scalar],
 ) -> Tuple[float, Dict[str, Scalar]]:
     """Evaluate global model on the entire test set."""
-    model = LogisticRegression(solver='liblinear', random_state=42, class_weight='balanced') # Ensure balanced weights for server-side too
-    utils.set_model_params(model, parameters)  # Use your utility function to set parameters
+    model = LogisticRegression(solver='liblinear', random_state=42, class_weight='balanced') 
+    utils.set_model_params(model, parameters)  
 
     try:
         loss = log_loss(y_test, model.predict_proba(X_test))
@@ -79,13 +70,6 @@ def evaluate(
         precision = precision_score(y_test, y_pred)
         f1 = f1_score(y_test, y_pred)
 
-        # Store server-side metrics
-        # server_round_history.append(server_round)
-        # server_accuracy_history.append(accuracy)
-        # server_recall_history.append(recall)
-        # server_precision_history.append(precision)
-        # server_f1_score_history.append(f1)
-
         return loss, {"accuracy": accuracy, "recall": recall, "precision": precision, "f1_score": f1}
     except Exception as e:
         print(f"Error during server-side evaluation: {e}")
@@ -93,14 +77,11 @@ def evaluate(
 
 
 def fit_round(rnd: int) -> Dict:
-    """Send round number to client"""
     return {"rnd": rnd}
 
 
 def get_on_fit_config_fn(local_epochs: int = 1):
-    """Return training configuration dict for each round with specified local epochs."""
     def fit_config(server_round: int):
-        """Return training config dict."""
         config = {
             "rnd": server_round,
             "local_epochs": local_epochs,
@@ -110,13 +91,10 @@ def get_on_fit_config_fn(local_epochs: int = 1):
 
 
 def get_evaluate_fn():
-    """Return an evaluation function for server-side evaluation."""
     return evaluate
 
 
 if __name__ == "__main__":
-    # Configure the server with FedAdam for FedAdam simulation
-    print("Running FedAdam simulation...")
     initial_params = fl.common.parameter.ndarrays_to_parameters(utils.get_initial_params())
     strategy_FedAdam = FedAdam(
         initial_parameters=initial_params,
@@ -130,7 +108,6 @@ if __name__ == "__main__":
         evaluate_fn=get_evaluate_fn(),
     )
 
-    # Start Flower server and get the history of the training process
     history = fl.server.start_server(
         server_address="localhost:8080",
         config=fl.server.ServerConfig(num_rounds=50),
@@ -139,15 +116,7 @@ if __name__ == "__main__":
 
     print("Federated Learning finished.")
 
-    # Extract aggregated client-side metrics from history
     if history and history.losses_distributed and history.metrics_distributed:
-        # for round_num, metrics in history.metrics_distributed.items():
-        #     print(history.metrics_distributed)
-        #     aggregated_round_history.append(round_num)
-        #     aggregated_accuracy_history.append(metrics['accuracy'])
-        #     aggregated_recall_history.append(metrics['recall'])
-        #     aggregated_precision_history.append(metrics['precision'])
-        #     aggregated_f1_score_history.append(metrics['f1_score'])
         _,aggregated_log_loss = zip(*history.losses_distributed)
         aggregated_round_history,aggregated_accuracy_history = zip(*history.metrics_distributed['accuracy'])
         _,aggregated_recall_history = zip(*history.metrics_distributed['recall'])
@@ -155,24 +124,14 @@ if __name__ == "__main__":
         _,aggregated_f1_score_history = zip(*history.metrics_distributed['f1_score'])
 
     if history and history.losses_centralized and history.metrics_centralized:
-        # for round_num, metrics in history.metrics_distributed.items():
-        #     print(history.metrics_distributed)
-        #     aggregated_round_history.append(round_num)
-        #     aggregated_accuracy_history.append(metrics['accuracy'])
-        #     aggregated_recall_history.append(metrics['recall'])
-        #     aggregated_precision_history.append(metrics['precision'])
-        #     aggregated_f1_score_history.append(metrics['f1_score'])
         _,server_log_loss = zip(*history.losses_centralized)
         server_round_history,server_accuracy_history = zip(*history.metrics_centralized['accuracy'])
         _,server_recall_history = zip(*history.metrics_centralized['recall'])
         _,server_precision_history = zip(*history.metrics_centralized['precision'])
         _,server_f1_score_history = zip(*history.metrics_centralized['f1_score'])
 
-    # Plotting
     plt.figure(figsize=(12, 8))
 
-    # print(server_round_history,server_accuracy_history)
-    # Plot server-side metrics
     plt.subplot(2, 1, 1)
     plt.plot(server_round_history, server_log_loss, label='Log Loss (Centralized)')
     plt.plot(server_round_history, server_accuracy_history, label='Accuracy (Centralized)')
@@ -184,7 +143,6 @@ if __name__ == "__main__":
     plt.title("Server-side Evaluation Metrics")
     plt.legend()
     plt.grid(True)
-    # Plot aggregated client-side metrics
     plt.subplot(2, 1, 2)
     plt.plot(aggregated_round_history, aggregated_log_loss, label='Log Loss (Distributed)')
     plt.plot(aggregated_round_history, aggregated_accuracy_history, label='Accuracy (Distributed)')

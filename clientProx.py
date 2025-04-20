@@ -1,11 +1,11 @@
 import flwr as fl
 import numpy as np
 import pandas as pd
-from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import log_loss,recall_score,precision_score, f1_score
+from sklearn.metrics import log_loss,recall_score,precision_score, f1_score,accuracy_score
 import os
 import utils
 import warnings
+import prox_model
 
 
 
@@ -13,10 +13,8 @@ class SpamClient(fl.client.NumPyClient):
     def __init__(self, client_id, train_data):
         self.client_id = client_id
         self.X_train, self.y_train = train_data
-        self.model = LogisticRegression(
-            penalty="l2",
+        self.model = prox_model.CustomLogisticRegression(
             max_iter=1, 
-            warm_start=True,
             class_weight='balanced'
         )
         utils.set_initial_params(self.model)
@@ -26,19 +24,22 @@ class SpamClient(fl.client.NumPyClient):
         return utils.get_model_parameters(self.model)
 
     def fit(self, parameters, config):
+        
         utils.set_model_params(self.model, parameters)
+        global_w = np.concatenate((parameters[1], parameters[0].flatten()))
+        self.model.prox_mu = config['proximal_mu']
         print(parameters[0].shape)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            self.model.fit(self.X_train, self.y_train)
+            self.model.fit(self.X_train, self.y_train, global_w = global_w)
             print(f"Training finished for round {config['rnd']}")
         return self.get_parameters(config={}), len(self.X_train), {}
 
     def evaluate(self, parameters, config):
         utils.set_model_params(self.model, parameters)
         loss = log_loss(self.y_train, self.model.predict_proba(self.X_train))
-        accuracy = self.model.score(self.X_train, self.y_train)
         y_pred = self.model.predict(self.X_train)
+        accuracy = accuracy_score(self.y_train,y_pred)
         recall = recall_score(self.y_train,y_pred)
         pres = precision_score(self.y_train,y_pred)
         f1_sc = f1_score(self.y_train,y_pred)

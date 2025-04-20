@@ -57,7 +57,7 @@ In each terminal, set the `FLOWER_CLIENT_ID` environment variable and run the cl
 set FLOWER_CLIENT_ID=0
 python client_1.py
 ```
-
+Replace `client_1.py` with `clientProx.py` specifically for FedProx.
 Repeat in the next terminals with `FLOWER_CLIENT_ID=1`, `FLOWER_CLIENT_ID=2`, and `FLOWER_CLIENT_ID=3`.
 
 4. **Monitor Output:**
@@ -67,7 +67,7 @@ The code will execute and display plots of various metrics related to federated 
 
 - Ensure that the data preprocessing step in `data_analysis.ipynb` is completed before running the federated simulation.
 - You can switch the server script (`serverAvg.py`, `serverAdam.py`, `serverProx.py`, `serverYogi.py`) to experiment with different aggregation algorithms.
-
+- Run `client_1.py` with `clientProx.py` specifically for FedProx.
 ---
 
 For any queries or issues, please contact the Ryan Azim Shaikh (ryanazimsk@gmail.com).
