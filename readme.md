@@ -71,5 +71,7 @@ The code will execute and display plots of various metrics related to federated 
 ---
 5. **Experiments:**
 -The File BasicExperiments.ipyb run simulation of FedAvg over 100 cleints over IID and Non-IID settings over different paremeters mentioned in Report section 3.3.
+
+
 For any queries or issues, please contact the Ryan Azim Shaikh (ryanazimsk@gmail.com).
 
