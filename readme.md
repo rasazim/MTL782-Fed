@@ -1,5 +1,3 @@
-<img src="https://r2cdn.perplexity.ai/pplx-full-logo-primary-dark%402x.png" class="logo" width="120"/>
-
 # Federated Learning Project – MTL782
 
 This repository contains the codebase for a Federated Learning project developed as part of the course **MTL782** under the guidance of **Prof. Niladri Chatterjee**.
@@ -61,6 +59,7 @@ python client_1.py
 ```
 
 Repeat in the next terminals with `FLOWER_CLIENT_ID=1`, `FLOWER_CLIENT_ID=2`, and `FLOWER_CLIENT_ID=3`.
+
 4. **Monitor Output:**
 The code will execute and display plots of various metrics related to federated learning performance.
 
@@ -71,5 +70,5 @@ The code will execute and display plots of various metrics related to federated 
 
 ---
 
-For any queries or issues, please contact the team members.
+For any queries or issues, please contact the Ryan Azim Shaikh (ryanazimsk@gmail.com).
 
